@@ -313,8 +313,8 @@
             <div class="actions">
                 <button class="btn-add" onclick="openModal()">เพิ่มข้อมูล</button>
                 <div class="search-box">
-                    <input type="text" placeholder="ค้นหา HN / ชื่อแพทย์">
-                    <button>ค้นหา</button>
+                    <input type="text" id="search-input" placeholder="ค้นหา HN / ชื่อเต็ม" onkeyup="searchTable()">
+                    <button onclick="searchTable()">ค้นหา</button>
                 </div>
             </div>
         </div>
@@ -373,6 +373,7 @@
             <input type="text" id="patient_id">
             <br>
             <button type="submit">เพิ่มผู้ใช้</button>
+            <button type="submit" id="save-changes-btn" style="display: none;">บันทึกการเปลี่ยนแปลง</button>
         </form>
     </div>
 </div>
@@ -441,14 +442,6 @@
     
      
         document.addEventListener("DOMContentLoaded", loadUsers);
-
-        function openModal() {
-            document.getElementById("userModal").style.display = "block";
-        }
-    
-        function closeModal() {
-            document.getElementById("userModal").style.display = "none";
-        }
     
         window.onclick = function (event) {
             var modal = document.getElementById("userModal");
@@ -475,7 +468,7 @@
             console.log("📤 กำลังส่งข้อมูลไปยัง API:", JSON.stringify(userData, null, 2));
         
             if (!userData.user_id || !userData.fullname_user || !userData.email || !userData.password || !userData.role) {
-                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
                 return;
             }
             
@@ -487,18 +480,18 @@
                 });
         
                 const result = await response.json();
-                console.log("✅ ผลลัพธ์จาก API:", result);
+                console.log("ผลลัพธ์จาก API:", result);
         
                 if (result.error) {
-                    alert("❌ เกิดข้อผิดพลาด: " + result.msg);
+                    alert("เกิดข้อผิดพลาด: " + result.msg);
                 } else {
-                    alert("✅ เพิ่มผู้ใช้สำเร็จ!");
+                    alert("เพิ่มผู้ใช้สำเร็จ!");
                     closeModal();
                     document.getElementById("add-user-form").reset();
                     loadUsers();
                 }
             } catch (error) {
-                console.error("❌ Error adding user:", error);
+                console.error("Error adding user:", error);
                 alert("เกิดข้อผิดพลาดในการส่งข้อมูล!");
             }
         });
@@ -516,6 +509,122 @@
                 });
             });
         });
+
+        function searchTable() {
+            const input = document.getElementById("search-input").value.toLowerCase();
+            const table = document.querySelector("table tbody");
+            const rows = table.getElementsByTagName("tr");
+    
+            for (let i = 0; i < rows.length; i++) {
+                let hnColumn = rows[i].getElementsByTagName("td")[0];
+                let nameColumn = rows[i].getElementsByTagName("td")[1];
+    
+                if (hnColumn && nameColumn) {
+                    let hnText = hnColumn.textContent.toLowerCase();
+                    let nameText = nameColumn.textContent.toLowerCase();
+    
+                    if (hnText.includes(input) || nameText.includes(input)) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        let editingUserId = null;
+
+        function openModal(isEdit = false) {
+            document.getElementById("userModal").style.display = "block";
+        
+            if (isEdit) {
+                document.getElementById("save-changes-btn").style.display = "block";
+                document.getElementById("add-user-form").querySelector("button[type='submit']").style.display = "none";
+            } else {
+                document.getElementById("save-changes-btn").style.display = "none";
+                document.getElementById("add-user-form").querySelector("button[type='submit']").style.display = "block";
+            }
+        }        
+        
+        function closeModal() {
+            document.getElementById("userModal").style.display = "none";
+            editingUserId = null;
+        
+            document.getElementById("add-user-form").reset();
+        
+            document.getElementById("add-user-form").querySelector("button[type='submit']").style.display = "block";
+            document.getElementById("save-changes-btn").style.display = "none";
+        }                
+
+        async function editUser(userId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/getUser/${userId}`);
+                const user = await response.json();
+        
+                if (!user || user.error) {
+                    alert("เกิดข้อผิดพลาด: " + (user.msg || "ไม่พบข้อมูลผู้ใช้"));
+                    return;
+                }
+        
+                document.getElementById("user_id").value = user.data.user_id || "";
+                document.getElementById("fullname_user").value = user.data.fullname_user || "";
+                document.getElementById("email").value = user.data.email || "";
+                document.getElementById("role").value = user.data.role || "doctor";
+                document.getElementById("chronic_disease").value = user.data.chronic_disease || "";
+                document.getElementById("status").value = user.data.status || "active";
+                document.getElementById("patient_id").value = user.data.patient_id || "";
+        
+                editingUserId = userId;
+        
+                openModal(true);
+        
+            } catch (error) {
+                console.error("Error fetching user:", error);
+                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล!");
+            }
+        }              
+
+        document.getElementById("save-changes-btn").addEventListener("click", async function (event) {
+            event.preventDefault();
+            if (!editingUserId) return alert("ไม่พบข้อมูลที่ต้องการแก้ไข!");
+        
+            const updatedUserData = {
+                user_id: document.getElementById("user_id").value.trim(),
+                fullname_user: document.getElementById("fullname_user").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                role: document.getElementById("role").value,
+                chronic_disease: document.getElementById("chronic_disease").value.trim(),
+                status: document.getElementById("status").value,
+                patient_id: document.getElementById("patient_id").value.trim()
+            };
+        
+            if (!updatedUserData.user_id || !updatedUserData.fullname_user || !updatedUserData.email) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน!");
+                return;
+            }
+        
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/updateUser/${editingUserId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedUserData)
+                });
+        
+                const result = await response.json();
+        
+                if (result.error) {
+                    alert("เกิดข้อผิดพลาด: " + result.msg);
+                } else {
+                    alert("แก้ไขข้อมูลสำเร็จ!");
+                    closeModal();
+                    loadUsers();
+                }
+            } catch (error) {
+                console.error("Error updating user:", error);
+                alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล!");
+            }
+        });
+        
     </script>
     
 
