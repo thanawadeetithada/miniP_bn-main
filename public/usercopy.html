@@ -314,8 +314,8 @@
             <div class="actions">
                 <button class="btn-add" onclick="openModal()">เพิ่มข้อมูล</button>
                 <div class="search-box">
-                    <input type="text" placeholder="ค้นหา HN / ชื่อแพทย์">
-                    <button>ค้นหา</button>
+                    <input type="text" id="search-input" placeholder="ค้นหา HN / ชื่อเต็ม" onkeyup="searchTable()">
+                    <button onclick="searchTable()">ค้นหา</button>
                 </div>
             </div>
         </div>
@@ -534,7 +534,28 @@
                 console.error("Error loading patients:", error);
             }
         }
-        
+
+        function searchTable() {
+            const input = document.getElementById("search-input").value.toLowerCase();
+            const table = document.querySelector("table tbody");
+            const rows = table.getElementsByTagName("tr");
+    
+            for (let i = 0; i < rows.length; i++) {
+                let hnColumn = rows[i].getElementsByTagName("td")[0];
+                let nameColumn = rows[i].getElementsByTagName("td")[1];
+    
+                if (hnColumn && nameColumn) {
+                    let hnText = hnColumn.textContent.toLowerCase();
+                    let nameText = nameColumn.textContent.toLowerCase();
+    
+                    if (hnText.includes(input) || nameText.includes(input)) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }        
     </script>
     
 
