@@ -497,6 +497,38 @@
                 });
             });
         });
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('http://127.0.0.1:3000/getPatients'); // แก้ URL API ตามที่ใช้
+                const data = await response.json();
+        
+                if (data.error) {
+                    console.error("เกิดข้อผิดพลาด:", data.msg);
+                    return;
+                }
+        
+                const tableBody = document.getElementById("patient-table-body");
+                tableBody.innerHTML = "";
+        
+                data.data.forEach(patient => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${patient.patient_id}</td>
+                        <td>${patient.first_name}</td>
+                        <td>${patient.last_name}</td>
+                        <td>
+                            <button class="btn-select" onclick="selectPatient('${patient.patient_id}', '${patient.first_name}', '${patient.last_name}')">เลือก</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+        
+            } catch (error) {
+                console.error("Error loading patients:", error);
+            }
+        }
+        
     </script>
     
 

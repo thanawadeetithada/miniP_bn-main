@@ -37,6 +37,7 @@ app.listen(port, hostname, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
 });
 
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -45,7 +46,10 @@ app.get("/", (req, res) => {
 
 app.get('/getUsers', (req, res) => {
     connection.query('SELECT user_id, fullname_user, email, role, status FROM users', (err, results) => {
-        if (err) return res.status(500).json({ error: true, msg: err.message });
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: true, msg: err.message });
+        }
         res.json({ error: false, data: results });
     });
 });
@@ -127,14 +131,22 @@ app.delete('/deleteUser/:id', (req, res) => {
 });
 
 app.get('/getPatients', (req, res) => {
-    connection.query('SELECT * FROM patients', (err, results) => {
-        res.json(err ? { error: "Database error", details: err } : results);
+    connection.query('SELECT patient_id, first_name, last_name FROM patients', (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: true, msg: "Database error", details: err.message });
+        }
+        res.json({ error: false, data: results });
     });
 });
 
 app.get('/getPatient/:id', (req, res) => {
-    connection.query('SELECT * FROM patients WHERE patient_id = ?', [req.params.id], (err, results) => {
-        res.json(err ? { error: "Database error", details: err } : results.length ? results[0] : null);
+    connection.query('SELECT patient_id, first_name, last_name FROM patients WHERE patient_id = ?', [req.params.id], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: true, msg: "Database error", details: err.message });
+        }
+        res.json({ error: false, data: results.length ? results[0] : null });
     });
 });
 
