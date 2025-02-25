@@ -302,9 +302,10 @@
 <div class="sidebar" id="sidebar">
     <h2>ข้อมูลทางการแพทย์</h2>
     <ul>
-        <li><a href="#">วินิจฉัยโรค</a></li>
-        <li><a href="#">นัดหมายคลินิก</a></li>
+        <li><a href="user.html">วินิจฉัยโรค</a></li>
+        <li><a href="usercopy.html">นัดหมายคลินิก</a></li>        
     </ul>
+            
 </div>
 
     <div class="container">
@@ -460,7 +461,7 @@
             console.log("📤 กำลังส่งข้อมูลไปยัง API:", JSON.stringify(userData, null, 2));
         
             if (!userData.user_id || !userData.fullname_user || !userData.email || !userData.password || !userData.role) {
-                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
                 return;
             }
             
@@ -472,18 +473,18 @@
                 });
         
                 const result = await response.json();
-                console.log("✅ ผลลัพธ์จาก API:", result);
+                console.log("ผลลัพธ์จาก API:", result);
         
                 if (result.error) {
-                    alert("❌ เกิดข้อผิดพลาด: " + result.msg);
+                    alert("เกิดข้อผิดพลาด: " + result.msg);
                 } else {
-                    alert("✅ เพิ่มผู้ใช้สำเร็จ!");
+                    alert("เพิ่มผู้ใช้สำเร็จ!");
                     closeModal();
                     document.getElementById("add-user-form").reset();
                     loadUsers();
                 }
             } catch (error) {
-                console.error("❌ Error adding user:", error);
+                console.error("Error adding user:", error);
                 alert("เกิดข้อผิดพลาดในการส่งข้อมูล!");
             }
         });
@@ -501,10 +502,11 @@
                 });
             });
         });
-
+              
+        
         async function loadPatients() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/getPatients'); // แก้ URL API ตามที่ใช้
+                const response = await fetch('http://127.0.0.1:3000/getPatients');
                 const data = await response.json();
         
                 if (data.error) {
