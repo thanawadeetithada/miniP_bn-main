@@ -341,24 +341,17 @@
         <h2>เพิ่มนัดหมายคลินิก</h2>
         <form id="add-user-form">
             <label>HN</label>
+            <input type="text" id="patient_id" required>
+            <br>
+            <label>ชื่อ</label>
             <input type="text" id="user_id" required>
             <br>
-            <label>ชื่อเต็ม:</label>
-            <input type="text" id="fullname_user" required>
+            <label>วันที่</label>
+            <input type="date" id="appointment_date" required>
             <br>
-            <label>อีเมล:</label>
-            <input type="email" id="email" required>
+            <label>Clinic</label>
+            <input type="text" id="Clinic">
             <br>
-            <label>โรคประจำตัว:</label>
-            <input type="text" id="chronic_disease">
-            <br>
-            <label>สถานะ:</label>
-            <select id="status">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-            </select>
-            <br>
-          
             <button type="submit">เพิ่มนัดหมายคลินิก</button>
         </form>
     </div>
