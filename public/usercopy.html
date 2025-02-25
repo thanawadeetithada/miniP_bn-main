@@ -164,22 +164,23 @@
 <script>
     function updateTime() {
         const timeZoneElement = document.querySelector(".time-zone");
-        const now = new Date();
-
-        const options = {
-            timeZone: "Asia/Bangkok",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-        };
-
-        const formatter = new Intl.DateTimeFormat("th-TH", options);
-        timeZoneElement.textContent = formatter.format(now);
-    }
+        if (timeZoneElement) {
+            const now = new Date();
+            const options = {
+                timeZone: "Asia/Bangkok",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+            };
+    
+            const formatter = new Intl.DateTimeFormat("th-TH", options);
+            timeZoneElement.textContent = formatter.format(now);
+        }
+    }    
 
     setInterval(updateTime, 1000);
     updateTime();
@@ -344,7 +345,7 @@
             <input type="text" id="patient_id" required>
             <br>
             <label>ชื่อผู้ป่วย</label>
-            <input type="text" id="patient_id" required>
+            <input type="text" id="patient_name" required>            
             <br>
             <label>วัน-เวลาที่นัด</label>
             <input type="date" id="appointment_date" required>
@@ -359,6 +360,34 @@
         </form>
     </div>
 </div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>แก้ไขนัดหมายคลินิก</h2>
+        <form id="edit-appointment-form">
+            <input type="hidden" id="edit_appointment_id">
+            
+            <label>HN</label>
+            <input type="text" id="edit_patient_id" required>
+            <br>
+            <label>ชื่อผู้ป่วย</label>
+            <input type="text" id="edit_patient_name" required>
+            <br>
+            <label>วัน-เวลาที่นัด</label>
+            <input type="date" id="edit_appointment_date" required>
+            <br>
+            <label>คลินิกที่นัด</label>
+            <input type="text" id="edit_clinic" required>
+            <br>
+            <label>ชื่อแพทย์ผู้รักษา</label>
+            <input type="text" id="edit_doctor_name" required>
+            <br>
+            <button type="submit">บันทึกการเปลี่ยนแปลง</button>
+        </form>
+    </div>
+</div>
+
 
 </body>
 </html>
@@ -385,18 +414,19 @@
             data.data.forEach(appointment => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${appointment.patient_id}</td>
-                    <td>${appointment.patient_id}</td>
-                    <td>${appointment.appointment_date}</td>
-                    <td>${appointment.clinic}</td>
-                    <td>${appointment.user_id}</td>
-                    <td>
-                        <button class="btn-edit" onclick="editAppointment('${appointment.appointment_id}')">แก้ไข</button>
-                        <button class="btn-delete" onclick="deleteAppointment('${appointment.appointment_id}')">ลบ</button>
-                    </td>
-                `;
+                <td>${appointment.patient_id}</td>
+                <td>${appointment.patient_name}</td>
+                <td>${appointment.appointment_date}</td>
+                <td>${appointment.clinic}</td>
+                <td>${appointment.doctor_name}</td>
+                <td>
+                    <button class="btn-edit" data-id="${appointment.appointment_id}">แก้ไข</button>
+                    <button class="btn-delete" data-id="${appointment.appointment_id}">ลบ</button>
+                </td>
+            `;
+            
                 tableBody.appendChild(row);
-            });
+            });            
     
         } catch (error) {
             console.error("Error loading appointments:", error);
@@ -406,28 +436,25 @@
     document.addEventListener("DOMContentLoaded", loadAppointments);
     
     
-        async function deleteUser(userId) {
-            if (!confirm("คุณต้องการลบผู้ใช้นี้ใช่หรือไม่?")) return;
+    async function deleteAppointment(appointmentId) {
+        if (!confirm("คุณต้องการลบนัดหมายนี้ใช่หรือไม่?")) return;
     
-            try {
-                const response = await fetch(`http://127.0.0.1:3000/deleteUser/${userId}`, { method: "DELETE" });
-                const result = await response.json();
+        try {
+            const response = await fetch(`http://127.0.0.1:3000/deleteAppointment/${appointmentId}`, { method: "DELETE" });
+            const result = await response.json();
     
-                if (result.error) {
-                    alert("เกิดข้อผิดพลาด: " + result.message);
-                } else {
-                    alert("ลบผู้ใช้สำเร็จ");
-                    loadUsers();
-                }
-    
-            } catch (error) {
-                console.error("Error deleting user:", error);
+            if (result.error) {
+                alert("เกิดข้อผิดพลาด: " + result.message);
+            } else {
+                alert("ลบนัดหมายสำเร็จ");
+                loadAppointments();
             }
-        }
     
-     
-        document.addEventListener("DOMContentLoaded", loadUsers);
-
+        } catch (error) {
+            console.error("Error deleting appointment:", error);
+        }
+    }
+    
         function openModal() {
             document.getElementById("userModal").style.display = "block";
         }
@@ -556,6 +583,100 @@
                 }
             }
         }        
+
+        async function editAppointment(appointmentId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/getAppointment/${appointmentId}`);
+                if (!response.ok) {
+                    throw new Error('ไม่พบข้อมูลนัดหมาย');
+                }
+        
+                const appointment = await response.json();
+        
+                if (appointment.error || !appointment.data) {
+                    alert("เกิดข้อผิดพลาด: " + (appointment.msg || "ไม่พบข้อมูล"));
+                    return;
+                }
+        
+                const { appointment_id, patient_id, patient_name, appointment_date, clinic, doctor_name } = appointment.data;
+                
+                document.getElementById("edit_appointment_id").value = appointment_id;
+                document.getElementById("edit_patient_id").value = patient_id;
+                document.getElementById("edit_patient_name").value = patient_name;
+                document.getElementById("edit_appointment_date").value = appointment_date;
+                document.getElementById("edit_clinic").value = clinic;
+                document.getElementById("edit_doctor_name").value = doctor_name;
+        
+                document.getElementById("editModal").style.display = "block";
+            } catch (error) {
+                console.error("Error fetching appointment data:", error);
+                alert("เกิดข้อผิดพลาดในการดึงข้อมูลนัดหมาย");
+            }
+        }        
+        
+        window.onclick = function (event) {
+            const editModal = document.getElementById("editModal");
+            const userModal = document.getElementById("userModal");
+        
+            if (event.target == editModal) {
+                editModal.style.display = "none";
+            }
+        
+            if (event.target == userModal) {
+                userModal.style.display = "none";
+            }
+        };       
+        
+        function closeEditModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
+
+        document.getElementById("edit-appointment-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+        
+            const updatedAppointment = {
+                appointment_id: document.getElementById("edit_appointment_id").value,
+                patient_id: document.getElementById("edit_patient_id").value,
+                patient_name: document.getElementById("edit_patient_name").value,
+                appointment_date: document.getElementById("edit_appointment_date").value,
+                clinic: document.getElementById("edit_clinic").value,
+                doctor_name: document.getElementById("edit_doctor_name").value
+            };
+        
+            try {
+                const response = await fetch("http://127.0.0.1:3000/updateAppointment", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(updatedAppointment)
+                });
+        
+                const result = await response.json();
+        
+                if (result.error) {
+                    alert("เกิดข้อผิดพลาด: " + result.msg);
+                } else {
+                    alert("อัปเดตนัดหมายสำเร็จ!");
+                    closeEditModal();
+                    loadAppointments();
+                }
+            } catch (error) {
+                console.error("Error updating appointment:", error);
+            }
+        });
+        
+        document.addEventListener("click", function(event) {
+            if (event.target.classList.contains("btn-edit")) {
+                const appointmentId = event.target.getAttribute("data-id");
+                editAppointment(appointmentId);
+            }
+            if (event.target.classList.contains("btn-delete")) {
+                const appointmentId = event.target.getAttribute("data-id");
+                deleteAppointment(appointmentId);
+            }
+        });        
+        
     </script>
     
 
