@@ -151,16 +151,24 @@ app.get('/getPatient/:id', (req, res) => {
 });
 
 app.post('/addAppointment', (req, res) => {
-    let { appointment_id, patient_id, user_id, appointment_date, clinic } = req.body;
+    const { patient_id, user_id, appointment_date, clinic } = req.body;
 
-    connection.query(
-        'INSERT INTO appointments (appointment_id, patient_id, user_id, appointment_date, clinic) VALUES (?, ?, ?, ?, ?)',
-        [appointment_id, patient_id, user_id, appointment_date, clinic],
-        (err, results) => {
-            res.json(err ? { error: "Cannot insert", details: err } : { message: "Appointment added", data: results });
+    if (!patient_id || !user_id || !appointment_date || !clinic) {
+        return res.status(400).json({ error: true, msg: "กรุณากรอกข้อมูลให้ครบถ้วน" });
+    }
+
+    const sql = `INSERT INTO appointments (patient_id, user_id, appointment_date, clinic, created_at) 
+                 VALUES (?, ?, ?, ?, NOW())`;
+
+    connection.query(sql, [patient_id, user_id, appointment_date, clinic], (err, results) => {
+        if (err) {
+            console.error("Database Insert Error:", err);
+            return res.status(500).json({ error: true, msg: "ไม่สามารถเพิ่มนัดหมายได้", details: err.sqlMessage });
         }
-    );
+        res.json({ error: false, msg: "เพิ่มนัดหมายสำเร็จ!", data: results });
+    });
 });
+
 
 app.put('/editAppointment/:appointmentId', (req, res) => {
     let { appointment_date, clinic } = req.body;
