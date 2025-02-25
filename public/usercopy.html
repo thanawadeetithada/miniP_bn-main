@@ -322,9 +322,10 @@
             <thead>
                 <tr>
                     <th>HN</th>
-                    <th>แพทย์</th>
-                    <th>วันที่</th>
-                    <th>คลินิก</th>
+                    <th>ชื่อผู้ป่วย</th>
+                    <th>วัน-เวลาที่นัด</th>
+                    <th>คลินิกที่นัด</th>
+                    <th>ชื่อแพทย์ผู้รักษา</th>
                     <th>การจัดการ</th>
                 </tr>
             </thead>
@@ -341,14 +342,17 @@
             <label>HN</label>
             <input type="text" id="patient_id" required>
             <br>
-            <label>ชื่อ</label>
-            <input type="text" id="user_id" required>
+            <label>ชื่อผู้ป่วย</label>
+            <input type="text" id="patient_id" required>
             <br>
-            <label>วันที่</label>
+            <label>วัน-เวลาที่นัด</label>
             <input type="date" id="appointment_date" required>
             <br>
-            <label>Clinic</label>
+            <label>คลินิกที่นัด</label>
             <input type="text" id="Clinic">
+            <br>
+            <label>ชื่อแพทย์ผู้รักษา</label>
+            <input type="text" id="user_id">
             <br>
             <button type="submit">เพิ่มนัดหมายคลินิก</button>
         </form>
@@ -381,9 +385,10 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${appointment.patient_id}</td>
-                    <td>${appointment.user_id}</td>
+                    <td>${appointment.patient_id}</td>
                     <td>${appointment.appointment_date}</td>
                     <td>${appointment.clinic}</td>
+                    <td>${appointment.user_id}</td>
                     <td>
                         <button class="btn-edit" onclick="editAppointment('${appointment.appointment_id}')">แก้ไข</button>
                         <button class="btn-delete" onclick="deleteAppointment('${appointment.appointment_id}')">ลบ</button>
