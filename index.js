@@ -169,6 +169,17 @@ app.post('/addAppointment', (req, res) => {
     });
 });
 
+app.get('/getAppointments', (req, res) => {
+    connection.query('SELECT * FROM appointments ORDER BY appointment_date DESC', (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: true, msg: "Database error", details: err.message });
+        }
+        res.json({ error: false, data: results });
+    });
+});
+
+
 
 app.put('/editAppointment/:appointmentId', (req, res) => {
     let { appointment_date, clinic } = req.body;

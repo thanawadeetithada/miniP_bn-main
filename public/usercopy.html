@@ -322,18 +322,15 @@
             <thead>
                 <tr>
                     <th>HN</th>
-                    <th>ชื่อเต็ม</th>
-                    <th>อีเมล</th>
-                    <th>บทบาท</th>
-                    <th>สถานะ</th>
+                    <th>แพทย์</th>
+                    <th>วันที่</th>
+                    <th>คลินิก</th>
                     <th>การจัดการ</th>
                 </tr>
             </thead>
-            <tbody id="user-table-body">
-         
+            <tbody id="appointment-table-body">
             </tbody>
-        </table>
-        
+        </table>      
     </div>
 
 <div id="userModal" class="modal">
@@ -367,39 +364,41 @@
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     const tooltipList = Array.from(tooltipTriggerList).map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
  
-        async function loadUsers() {
-            try {
-                const response = await fetch('http://127.0.0.1:3000/getUsers');
-                const data = await response.json();
+    async function loadAppointments() {
+        try {
+            const response = await fetch('http://127.0.0.1:3000/getAppointments');
+            const data = await response.json();
     
-                if (data.error) {
-                    console.error("เกิดข้อผิดพลาด:", data.msg);
-                    return;
-                }
-    
-                const tableBody = document.getElementById("user-table-body");
-                tableBody.innerHTML = "";
-    
-                data.data.forEach(user => {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${user.user_id}</td>
-                        <td>${user.fullname_user}</td>
-                        <td>${user.email}</td>
-                        <td>${user.role}</td>
-                        <td>${user.status}</td>
-                        <td>
-                            <button class="btn-edit" onclick="editUser('${user.user_id}')">แก้ไข</button>
-                            <button class="btn-delete" onclick="deleteUser('${user.user_id}')">ลบ</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-    
-            } catch (error) {
-                console.error("Error loading users:", error);
+            if (data.error) {
+                console.error("เกิดข้อผิดพลาด:", data.msg);
+                return;
             }
+    
+            const tableBody = document.getElementById("appointment-table-body");
+            tableBody.innerHTML = "";
+    
+            data.data.forEach(appointment => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${appointment.patient_id}</td>
+                    <td>${appointment.user_id}</td>
+                    <td>${appointment.appointment_date}</td>
+                    <td>${appointment.clinic}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editAppointment('${appointment.appointment_id}')">แก้ไข</button>
+                        <button class="btn-delete" onclick="deleteAppointment('${appointment.appointment_id}')">ลบ</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+    
+        } catch (error) {
+            console.error("Error loading appointments:", error);
         }
+    }
+    
+    document.addEventListener("DOMContentLoaded", loadAppointments);
+    
     
         async function deleteUser(userId) {
             if (!confirm("คุณต้องการลบผู้ใช้นี้ใช่หรือไม่?")) return;
