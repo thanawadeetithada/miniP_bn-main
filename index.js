@@ -86,21 +86,17 @@ app.post('/addUser', async (req, res) => {
 
             const patient_id_value = patient_id ? patient_id : null; 
 
-const sql = `INSERT INTO users (user_id, fullname_user, email, password, role, chronic_disease, status, patient_id, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+            const sql = `INSERT INTO users (user_id, fullname_user, email, password, role, chronic_disease, status, patient_id, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
 
-const values = [user_id, fullname_user, email, hashedPassword, role, chronic_disease || "", status || "active", patient_id_value];
-
-connection.query(sql, values, (err, results) => {
-    if (err) {
-        console.error("Error inserting user:", err);
-        return res.status(500).json({ error: true, msg: "Cannot Insert", details: err.sqlMessage });
-    }
-    console.log("เพิ่มผู้ใช้สำเร็จ:", results);
-    res.json({ error: false, data: results, msg: "Inserted successfully" });
-});
-
-        });
+            connection.query(sql, [user_id, fullname_user, email, hashedPassword, role, chronic_disease || "", status || "active", patient_id || null], 
+                (err, results) => {
+                    if (err) {
+                        return res.status(500).json({ error: true, msg: "Cannot Insert", details: err.sqlMessage });
+                    }
+                    res.json({ error: false, data: results, msg: "Inserted successfully" });
+                });
+            });
 
     } catch (error) {
         console.error("❌ Error:", error);
@@ -170,15 +166,26 @@ app.post('/addAppointment', (req, res) => {
 });
 
 app.get('/getAppointments', (req, res) => {
-    connection.query('SELECT * FROM appointments ORDER BY appointment_date DESC', (err, results) => {
+    const sql = `
+        SELECT a.appointment_id, a.patient_id, a.user_id, a.appointment_date, a.clinic, 
+               p.first_name, p.last_name,
+               u.fullname_user AS doctor_name
+        FROM appointments a
+        LEFT JOIN patients p ON a.patient_id = p.patient_id
+        LEFT JOIN users u ON a.user_id = u.user_id
+        ORDER BY a.appointment_date DESC;
+    `;
+
+    connection.query(sql, (err, results) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: true, msg: "Database error", details: err.message });
         }
+
+        console.log("API Response Data:", results);
         res.json({ error: false, data: results });
     });
 });
-
 
 
 app.put('/editAppointment/:appointmentId', (req, res) => {
@@ -192,5 +199,24 @@ app.put('/editAppointment/:appointmentId', (req, res) => {
 app.delete('/deleteAppointment/:appointmentId', (req, res) => {
     connection.query('DELETE FROM appointments WHERE appointment_id = ?', [req.params.appointmentId], (err, results) => {
         res.json(err ? { error: "Cannot delete", details: err } : { message: "Appointment deleted", data: results });
+    });
+});
+
+app.get('/getAppointment/:id', (req, res) => {
+    const appointmentId = req.params.id;
+    
+    if (!appointmentId) {
+        return res.status(400).json({ error: true, msg: "Invalid appointment ID" });
+    }
+
+    connection.query('SELECT * FROM appointments WHERE appointment_id = ?', [appointmentId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: true, msg: "Database error", details: err.message });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: true, msg: "Appointment not found" });
+        }
+        res.json({ error: false, data: results[0] });
     });
 });
